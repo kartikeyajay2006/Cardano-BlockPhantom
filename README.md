@@ -1,70 +1,85 @@
-# Getting Started with Create React App
+<div align="center">
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# 👻 BlockPhantom
 
-## Available Scripts
+**Check whether a wallet is safe before you send it money. Paste a Cardano or Ethereum address and get a risk score, a transaction sample and a PDF report.**
 
-In the project directory, you can run:
+*Built for the Cardano Hackathon Asia, where the team reached the finals.*
 
-### `npm start`
+[![Cardano](https://img.shields.io/badge/Cardano-Blockfrost-0033AD?style=flat-square&logo=cardano&logoColor=white)](https://blockfrost.io/)
+[![Ethereum](https://img.shields.io/badge/Ethereum-Alchemy-363636?style=flat-square&logo=ethereum&logoColor=white)](https://www.alchemy.com/)
+[![Masumi](https://img.shields.io/badge/Masumi-agent_payments-7c3aed?style=flat-square)](https://www.masumi.network/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-frontend-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+</div>
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## The idea
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Scams on-chain are final: once ADA or ETH is sent, it is gone.
+BlockPhantom gives anyone a quick **pre-send check**. It looks at a wallet's recent activity, scores how risky the wallet looks, and produces a report you can save or share.
 
-### `npm run build`
+It is also designed to run as a **paid AI agent on the Masumi network**. Another agent (or a person) can pay a small amount of ADA per check through Masumi's payment API.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Features
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+| | |
+|---|---|
+| 🔎 **Multi-chain lookup** | Cardano addresses through **Blockfrost**, Ethereum addresses through **Alchemy** transfer history |
+| 📊 **Risk score** | A 1–99 score, a probability and a low, medium or high level, with the transaction statistics behind it (count, average size, spread) |
+| 🧾 **Transaction sample** | The latest transactions for the address |
+| 📄 **PDF report** | One-click report generated with ReportLab |
+| 💸 **Masumi payments** | Create a payment request in ADA and poll its status (`MasumiPay` component + `masumi_client.py`) |
+| 🧪 **Demo mode** | Works without API keys, which is useful for a live pitch |
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## How it works
 
-### `npm run eject`
+```mermaid
+flowchart LR
+    U[Address + chain] --> API[FastAPI]
+    API -->|cardano| BF[Blockfrost]
+    API -->|ethereum| AL[Alchemy]
+    BF --> R[Risk engine<br/>tx stats → score + level]
+    AL --> R
+    R --> UI[React dashboard]
+    R --> PDF[ReportLab PDF]
+    UI --> M[Masumi payment request]
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## API
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+| Method | Endpoint | Returns |
+|---|---|---|
+| `GET` | `/wallet/{chain}/{address}/risk` | Score, probability, level and stats |
+| `GET` | `/wallet/{chain}/{address}/history` | Recent transactions |
+| `GET` | `/wallet/{chain}/{address}/pdf` | PDF risk report |
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Add `?demo=true` to any endpoint to force demo data.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Run locally
 
-## Learn More
+```bash
+git clone https://github.com/kartikeyajay2006/Cardano-BlockPhantom.git
+cd Cardano-BlockPhantom
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# API: http://localhost:8000
+pip install -r requirements.txt
+export BLOCKFROST_API_KEY=...        # optional, for Cardano
+export BLOCKFROST_NETWORK=mainnet    # or testnet
+export ALCHEMY_API_KEY=...           # optional, for Ethereum
+export MASUMI_API_KEY=...            # optional, for agent payments
+uvicorn app:app --reload
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+The React files (`App.js`, `MasumiPay.jsx`, `index.js`) come from a Create React App project. Put them under `src/` (and `index.html`, `manifest.json` under `public/`), then run `npm install && npm start`.
 
-### Code Splitting
+## Status
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+This is a **hackathon prototype**. The Blockfrost, Alchemy and Masumi clients are implemented. The scoring currently runs in **demo mode with simulated scores**, which kept the pitch reliable. The next step is to replace it with a model trained on labelled scam and clean wallets.
 
-### Analyzing the Bundle Size
+## Author
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Built by **[Kartikeya Yadav](https://github.com/kartikeyajay2006)**.
+[LinkedIn](https://www.linkedin.com/in/kartikeya2006/) · [Portfolio](https://kartikeya-portfolio-rx7w.vercel.app/)
